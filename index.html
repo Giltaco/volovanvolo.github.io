@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Catálogo — Volovan Volo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --rojo:    #6B1228;
+    --rojo-med:#8B1A34;
+    --rojo-claro: #C05070;
+    --dorado:  #C9A84C;
+    --dorado-claro: #E8C97A;
+    --dorado-palido: #F5EFE6;
+    --crema:   #F0EAD8;
+    --crema-2: #EDE7D4;
+    --cafe:    #3D1A0A;
+    --cafe-med:#6B4226;
+    --cafe-claro:#A87A5A;
+    --blanco:  #FDFAF5;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--crema);
+    color: var(--cafe);
+    min-height: 100vh;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--rojo);
+    padding: 48px 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.12);
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.08);
+  }
+  .hero-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    color: var(--dorado);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+  .hero-text h1 em {
+    font-style: italic;
+    color: #E8C97A;
+  }
+  .hero-text p {
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    margin-top: 8px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+  .hero-badge {
+    background: var(--dorado);
+    color: var(--cafe);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 16px;
+    display: inline-block;
+  }
+  .hero-mascot {
+    font-size: 90px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.3));
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* ── BARRA DE BÚSQUEDA Y FILTROS ── */
+  .controls {
+    background: var(--rojo-med);
+    padding: 16px 40px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .controls-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 180px;
+    max-width: 260px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--cafe-claro);
+    width: 14px; height: 14px;
+  }
+  .search-input {
+    width: 100%;
+    padding: 9px 14px 9px 34px;
+    border-radius: 20px;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: background 0.2s;
+  }
+  .search-input::placeholder { color: rgba(255,255,255,0.5); }
+  .search-input:focus { background: rgba(255,255,255,0.25); }
+
+  .filter-btn {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--dorado); color: var(--dorado); }
+  .filter-btn.active {
+    background: var(--dorado);
+    border-color: var(--dorado);
+    color: var(--cafe);
+  }
+
+  /* ── CONTENIDO ── */
+  .content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 40px 60px;
+  }
+
+  /* ── SECCIÓN ── */
+  .seccion { margin-bottom: 48px; }
+  .seccion-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--dorado);
+  }
+  .seccion-icono {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--rojo);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .seccion-titulo {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: var(--rojo);
+    line-height: 1;
+  }
+  .seccion-sub {
+    font-size: 12px;
+    color: var(--cafe-claro);
+    margin-top: 3px;
+    font-weight: 300;
+  }
+  .seccion-count {
+    margin-left: auto;
+    background: var(--dorado-palido);
+    border: 1px solid var(--dorado);
+    color: var(--cafe-med);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    gap: 16px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--blanco);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(201,168,76,0.2);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    cursor: default;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(107,18,40,0.12);
+    border-color: var(--dorado);
+  }
+  .card-img {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-ribbon {
+    position: absolute;
+    top: 10px; right: -24px;
+    background: var(--rojo);
+    color: white;
+    font-size: 9px;
+    font-weight: 500;
+    padding: 3px 28px 3px 10px;
+    transform: rotate(0deg);
+    letter-spacing: 0.5px;
+    display: none;
+  }
+  .card.popular .card-ribbon { display: block; }
+
+  .card-body { padding: 14px 16px 16px; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .card-nombre {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    color: var(--cafe);
+    line-height: 1.25;
+  }
+  .card-precio {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--rojo);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .card-desc {
+    font-size: 11.5px;
+    color: var(--cafe-claro);
+    line-height: 1.5;
+    font-weight: 300;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--crema-2);
+  }
+  .card-cat {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+  }
+  .cat-volovanes  { background: #FDF0E0; color: #7A4A10; }
+  .cat-pasteles   { background: #F7E0EE; color: #7A1040; }
+  .cat-bebidas    { background: #E0EAF7; color: #103070; }
+  .cat-extras     { background: #EAF3DE; color: #2E5C10; }
+
+  .card-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--dorado);
+    opacity: 0.6;
+  }
+
+  /* ── EMPTY ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--cafe-claro);
+  }
+  .empty-state .ico { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── PIE ── */
+  .footer {
+    background: var(--cafe);
+    padding: 24px 40px;
+    text-align: center;
+  }
+  .footer p {
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+    font-weight: 300;
+  }
+  .footer span { color: var(--dorado); font-weight: 500; }
+
+  /* ── ANIMACIÓN ENTRADA ── */
+  .card {
+    opacity: 0;
+    animation: fadeUp 0.4s ease forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .hero { padding: 32px 20px 24px; }
+    .hero-text h1 { font-size: 28px; }
+    .hero-mascot { font-size: 60px; }
+    .controls { padding: 12px 20px; }
+    .content { padding: 24px 20px 48px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1>Volovan <em>Volo</em></h1>
+      <p>Catálogo de productos · Puebla, México</p>
+      <span class="hero-badge">✦ Menú 2025</span>
+    </div>
+    <div class="hero-mascot">🥐</div>
+  </div>
+</header>
+
+<!-- CONTROLES -->
+<nav class="controls">
+  <div class="controls-inner">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" type="text" id="busqueda" placeholder="Buscar producto..." oninput="aplicarFiltros()"/>
+    </div>
+    <button class="filter-btn active" onclick="setCategoria('todos', this)">Todos</button>
+    <button class="filter-btn" onclick="setCategoria('Volovanes', this)">Volovanes</button>
+    <button class="filter-btn" onclick="setCategoria('Pasteles', this)">Pasteles</button>
+    <button class="filter-btn" onclick="setCategoria('Bebidas', this)">Bebidas</button>
+    <button class="filter-btn" onclick="setCategoria('Extras', this)">Extras</button>
+  </div>
+</nav>
+
+<!-- CATÁLOGO -->
+<main class="content" id="catalogo"></main>
+
+<!-- PIE -->
+<footer class="footer">
+  <p><span>Volovan Volo</span> · Sistema de Punto de Venta · Puebla, México</p>
+</footer>
+
+<script>
+const productos = [
+  // ── VOLOVANES
+  { nombre: "Volován de Pollo",       desc: "Masa hojaldrada rellena de pollo en salsa bechamel",    precio: 45,  cat: "Volovanes", emoji: "🥐", bg: "#FDF5E8", popular: true  },
+  { nombre: "Volován de Champiñón",   desc: "Relleno de champiñones salteados con crema",             precio: 45,  cat: "Volovanes", emoji: "🍄", bg: "#F5EDE0"                },
+  { nombre: "Volován de Atún",        desc: "Atún con mayonesa y pimiento en masa crujiente",          precio: 42,  cat: "Volovanes", emoji: "🐟", bg: "#E8F0F5"                },
+  { nombre: "Volován Mixto",          desc: "Combinación especial de pollo y champiñón",               precio: 48,  cat: "Volovanes", emoji: "🥧", bg: "#F0EAD0", popular: true  },
+  { nombre: "Volován Hawaiano",       desc: "Jamón, piña y queso fundido en masa dorada",              precio: 48,  cat: "Volovanes", emoji: "🍍", bg: "#FDF8E0"                },
+  { nombre: "Volován de Espinaca",    desc: "Espinacas salteadas con queso crema y ajo",               precio: 44,  cat: "Volovanes", emoji: "🌿", bg: "#EAF3DE"                },
+
+  // ── PASTELES
+  { nombre: "Pastel de Chocolate",    desc: "Bizcocho húmedo con ganache de chocolate oscuro",         precio: 380, cat: "Pasteles",  emoji: "🎂", bg: "#F5E8E0", popular: true  },
+  { nombre: "Pastel de Vainilla",     desc: "Esponjoso bizcocho con betún de mantequilla",             precio: 350, cat: "Pasteles",  emoji: "🍰", bg: "#FDF5E8"                },
+  { nombre: "Pastel de Fresas",       desc: "Base de vainilla con crema chantilly y fresas frescas",   precio: 400, cat: "Pasteles",  emoji: "🍓", bg: "#FDE8EE"                },
+  { nombre: "Pastel Red Velvet",      desc: "Terciopelo rojo con frosting de queso crema",              precio: 420, cat: "Pasteles",  emoji: "❤️", bg: "#F7E0E0", popular: true  },
+  { nombre: "Pastel de Zanahoria",    desc: "Con nuez y betún de queso crema artesanal",               precio: 370, cat: "Pasteles",  emoji: "🥕", bg: "#FDF0E0"                },
+  { nombre: "Pastel Tres Leches",     desc: "Clásico pastel empapado en tres tipos de leche",          precio: 360, cat: "Pasteles",  emoji: "🍮", bg: "#F5EFE8"                },
+
+  // ── BEBIDAS
+  { nombre: "Café Americano",         desc: "Café negro preparado al momento, granos de altura",       precio: 35,  cat: "Bebidas",   emoji: "☕", bg: "#F0E8DC"                },
+  { nombre: "Cappuccino",             desc: "Espresso con leche vaporizada y espuma sedosa",            precio: 45,  cat: "Bebidas",   emoji: "☕", bg: "#F5EDE0", popular: true  },
+  { nombre: "Agua de Jamaica",        desc: "Agua fresca natural de flor de jamaica sin conservantes", precio: 25,  cat: "Bebidas",   emoji: "🫖", bg: "#F7E0EE"                },
+  { nombre: "Agua de Horchata",       desc: "Bebida refrescante de arroz con canela y vainilla",       precio: 25,  cat: "Bebidas",   emoji: "🥛", bg: "#F5F0E8"                },
+  { nombre: "Limonada Natural",       desc: "Limonada exprimida al momento con menta",                 precio: 28,  cat: "Bebidas",   emoji: "🍋", bg: "#F5F5DC"                },
+
+  // ── EXTRAS
+  { nombre: "Ensalada Verde",         desc: "Mix de lechugas frescas con aderezo de la casa",          precio: 55,  cat: "Extras",    emoji: "🥗", bg: "#EAF3DE"                },
+  { nombre: "Pan de Elote",           desc: "Pan dulce esponjoso de maíz dulce artesanal",             precio: 28,  cat: "Extras",    emoji: "🌽", bg: "#FDF5E0"                },
+  { nombre: "Salsa Extra",            desc: "Porción adicional de salsa de tu elección",               precio: 10,  cat: "Extras",    emoji: "🫙", bg: "#F0EAD0"                },
+  { nombre: "Rebanada de Pastel",     desc: "Rebanada individual del pastel del día",                  precio: 65,  cat: "Extras",    emoji: "🍰", bg: "#F7E8EE", popular: true  },
+];
+
+const SECCIONES = [
+  { cat: "Volovanes", icono: "🥐", sub: "Especialidad de la casa · masa hojaldrada artesanal" },
+  { cat: "Pasteles",  icono: "🎂", sub: "Pasteles completos y por rebanada" },
+  { cat: "Bebidas",   icono: "☕", sub: "Bebidas calientes y frescas" },
+  { cat: "Extras",    icono: "🥗", sub: "Complementos y porciones extra" },
+];
+
+let catActiva = 'todos';
+let busquedaActiva = '';
+
+function setCategoria(cat, btn) {
+  catActiva = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  aplicarFiltros();
+}
+
+function aplicarFiltros() {
+  busquedaActiva = document.getElementById('busqueda').value.toLowerCase();
+  renderizar();
+}
+
+function renderizar() {
+  const catalogo = document.getElementById('catalogo');
+  catalogo.innerHTML = '';
+
+  const seccionesMostrar = catActiva === 'todos'
+    ? SECCIONES
+    : SECCIONES.filter(s => s.cat === catActiva);
+
+  let hayAlgo = false;
+
+  seccionesMostrar.forEach(sec => {
+    const items = productos.filter(p =>
+      p.cat === sec.cat &&
+      (p.nombre.toLowerCase().includes(busquedaActiva) ||
+       p.desc.toLowerCase().includes(busquedaActiva))
+    );
+    if (items.length === 0) return;
+    hayAlgo = true;
+
+    const secDiv = document.createElement('section');
+    secDiv.className = 'seccion';
+
+    secDiv.innerHTML = `
+      <div class="seccion-header">
+        <div class="seccion-icono">${sec.icono}</div>
+        <div>
+          <div class="seccion-titulo">${sec.cat}</div>
+          <div class="seccion-sub">${sec.sub}</div>
+        </div>
+        <span class="seccion-count">${items.length} producto${items.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="grid">
+        ${items.map((p, i) => `
+          <div class="card${p.popular ? ' popular' : ''}" style="animation-delay:${i * 0.06}s">
+            <div class="card-img" style="background:${p.bg}">
+              ${p.emoji}
+              <div class="card-ribbon">Popular</div>
+            </div>
+            <div class="card-body">
+              <div class="card-top">
+                <div class="card-nombre">${p.nombre}</div>
+                <div class="card-precio">$${p.precio.toFixed(2)}</div>
+              </div>
+              <div class="card-desc">${p.desc}</div>
+              <div class="card-footer">
+                <span class="card-cat cat-${p.cat.toLowerCase()}">${p.cat}</span>
+                <div class="card-dot"></div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    catalogo.appendChild(secDiv);
+  });
+
+  if (!hayAlgo) {
+    catalogo.innerHTML = `
+      <div class="empty-state">
+        <div class="ico">🔍</div>
+        <p>No se encontraron productos con "<strong>${busquedaActiva}</strong>"</p>
+      </div>`;
+  }
+}
+
+renderizar();
+</script>
+</body>
+</html>
