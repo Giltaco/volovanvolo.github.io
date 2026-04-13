@@ -201,6 +201,20 @@ const TIENDA = {
   </div>
 </div>
 
+<!-- CONTROLES / FILTROS DINÁMICOS -->
+<nav class="controls">
+  <div class="controls-inner">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" type="text" id="busqueda" placeholder="Buscar producto..." oninput="aplicarFiltros()"/>
+    </div>
+    <button class="filter-btn active" onclick="setCategoria('todos',this)">Todos</button>
+    <div id="filtrosDinamicos"></div>
+  </div>
+</nav>
+
+<main class="content" id="catalogo"></main>
+
 <!-- COTIZA -->
 <section class="cotiza">
   <div class="cotiza-inner">
@@ -220,20 +234,6 @@ const TIENDA = {
     </div>
   </div>
 </section>
-
-<!-- CONTROLES / FILTROS DINÁMICOS -->
-<nav class="controls">
-  <div class="controls-inner">
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input" type="text" id="busqueda" placeholder="Buscar producto..." oninput="aplicarFiltros()"/>
-    </div>
-    <button class="filter-btn active" onclick="setCategoria('todos',this)">Todos</button>
-    <div id="filtrosDinamicos"></div>
-  </div>
-</nav>
-
-<main class="content" id="catalogo"></main>
 
 <footer class="footer">
   <p class="footer-line"><span>Volovan Volo 2026</span> · Acuña, Coahuila</p>
