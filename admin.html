@@ -732,20 +732,68 @@ function filterProducts() {
   if (!filtered.length) { wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Sin resultados</div></div>`; return; }
   wrap.innerHTML = `<table class="product-table">
     <thead><tr><th>Imagen</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
-    <tbody>${filtered.map(p => `
-      <tr>
+    <tbody>${filtered.map(p => {
+      const agotado = p.stock !== null && p.stock !== undefined && p.stock <= 0;
+      const stockDisplay = p.stock === null || p.stock === undefined
+        ? '<span style="color:var(--cafe-light);font-size:11px">Sin límite</span>'
+        : agotado
+          ? `<span style="color:var(--danger);font-weight:600">0 — Agotado</span>`
+          : `<span style="color:var(--success);font-weight:600">${p.stock}</span>`;
+      return `
+      <tr style="${agotado ? 'opacity:0.75;background:#fdf7f7' : ''}">
         <td>${p.imagen_url ? `<img class="prod-img-thumb" src="${p.imagen_url}" alt="${p.nombre}">` : `<div class="prod-emoji" style="background:${p.bg_color||'#F5EFE6'}">${p.emoji||'🍽️'}</div>`}</td>
-        <td><strong>${p.nombre}</strong>${p.popular?'<span class="badge-popular">⭐</span>':''}${p.descripcion?`<br><small style="color:var(--cafe-light)">${p.descripcion.substring(0,40)}${p.descripcion.length>40?'…':''}</small>`:''}</td>
+        <td>
+          <strong>${p.nombre}</strong>${p.popular?'<span class="badge-popular">⭐</span>':''}
+          ${agotado ? '<span style="margin-left:4px;font-size:10px;background:#fdecea;color:var(--danger);border:1px solid #f5c6cb;padding:2px 8px;border-radius:10px;font-weight:600">AGOTADO</span>' : ''}
+          ${p.descripcion?`<br><small style="color:var(--cafe-light)">${p.descripcion.substring(0,40)}${p.descripcion.length>40?'…':''}</small>`:''}
+        </td>
         <td>${p.categorias?.emoji||''} ${p.categorias?.nombre||'—'}</td>
         <td><strong style="color:var(--rojo)">${p.precio>0?'$'+parseFloat(p.precio).toFixed(2):'—'}</strong></td>
-        <td>${p.stock??'—'}</td>
+        <td>
+          ${stockDisplay}
+          <br>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+            <input type="number" min="0" value="${p.stock??''}" placeholder="∞"
+              style="width:60px;padding:3px 6px;border:1px solid rgba(201,168,76,0.35);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--cafe)"
+              onchange="actualizarStock('${p.id}', this.value)"
+              title="Cambia el stock y presiona Enter">
+            <button class="btn btn-sm ${agotado ? 'btn-success' : 'btn-danger'}" style="font-size:11px;white-space:nowrap"
+              onclick="toggleAgotado('${p.id}', ${agotado})">
+              ${agotado ? '✓ Reabastecer' : '✕ Agotar'}
+            </button>
+          </div>
+        </td>
         <td><span class="${p.activo?'badge-activo':'badge-inactivo'}">${p.activo?'Activo':'Oculto'}</span></td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-outline btn-sm" onclick="editProd('${p.id}')">✏️</button>
           <button class="btn btn-danger btn-sm" onclick="deleteProd('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">🗑️</button>
         </td>
-      </tr>`).join('')}
+      </tr>`;
+    }).join('')}
     </tbody></table>`;
+}
+
+// ── STOCK ─────────────────────────────────────────────
+async function actualizarStock(id, valor) {
+  const nuevoStock = valor === '' ? null : parseInt(valor);
+  if (valor !== '' && isNaN(nuevoStock)) return;
+  const { error } = await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', id);
+  if (error) { toast('Error al actualizar stock', 'error'); return; }
+  const idx = productos.findIndex(p => p.id === id);
+  if (idx !== -1) productos[idx].stock = nuevoStock;
+  filterProducts();
+  const etiqueta = nuevoStock === null ? 'sin límite' : nuevoStock === 0 ? 'marcado como agotado' : `stock: ${nuevoStock}`;
+  toast(`✓ Stock actualizado — ${etiqueta}`, 'success');
+}
+
+async function toggleAgotado(id, estaAgotado) {
+  const nuevoStock = estaAgotado ? 99 : 0;
+  const { error } = await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', id);
+  if (error) { toast('Error al actualizar', 'error'); return; }
+  const idx = productos.findIndex(p => p.id === id);
+  if (idx !== -1) productos[idx].stock = nuevoStock;
+  filterProducts();
+  toast(estaAgotado ? '✓ Producto reabastecido (stock: 99)' : '✕ Producto marcado como agotado', estaAgotado ? 'success' : 'default');
 }
 
 // ── MODAL PRODUCTO ────────────────────────────────────
