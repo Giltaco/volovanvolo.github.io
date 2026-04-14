@@ -235,7 +235,7 @@ let productos  = [];
 let categorias = [];
 let pedidos    = [];
 let editingProd = null;
-let filtroPedido = 'todos';
+let filtroPedido = 'activos';
 
 function initSupabase() {
   supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -345,11 +345,12 @@ function initSupabase() {
 
       <!-- Filtros -->
       <div class="filtro-estados">
-        <button class="filtro-est-btn active" onclick="setFiltroPedido('todos',this)">Todos</button>
+        <button class="filtro-est-btn active" onclick="setFiltroPedido('activos',this)">📋 Pendientes</button>
         <button class="filtro-est-btn" onclick="setFiltroPedido('nuevo',this)">🔴 Nuevos</button>
         <button class="filtro-est-btn" onclick="setFiltroPedido('preparando',this)">🟡 Preparando</button>
         <button class="filtro-est-btn" onclick="setFiltroPedido('listo',this)">🟢 Listos</button>
         <button class="filtro-est-btn" onclick="setFiltroPedido('entregado',this)">✅ Entregados</button>
+        <button class="filtro-est-btn" onclick="setFiltroPedido('todos',this)">🗂️ Todos</button>
       </div>
 
       <div id="pedidosWrap"></div>
@@ -558,6 +559,12 @@ async function startApp() {
       renderPedidos();
       toast('🛒 ¡Nuevo pedido de ' + payload.new.cliente_nombre + '!', 'success');
     })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos' }, (payload) => {
+      const idx = pedidos.findIndex(p => p.id === payload.new.id);
+      if (idx !== -1) pedidos[idx] = payload.new;
+      actualizarBadgePedidos();
+      renderPedidos();
+    })
     .subscribe();
 }
 
@@ -575,7 +582,6 @@ async function loadPedidos() {
   pedidos = data || [];
   actualizarBadgePedidos();
   renderPedidos();
-  document.getElementById('pedidosSubtitle').textContent = `${pedidos.length} pedido${pedidos.length !== 1 ? 's' : ''} en total`;
 }
 
 async function loadConfigDomicilio() {
@@ -633,9 +639,28 @@ function setFiltroPedido(estado, btn) {
 
 function renderPedidos() {
   const wrap = document.getElementById('pedidosWrap');
-  const lista = filtroPedido === 'todos' ? pedidos : pedidos.filter(p => p.estado === filtroPedido);
+  let lista;
+  if (filtroPedido === 'todos') {
+    lista = pedidos;
+  } else if (filtroPedido === 'activos') {
+    lista = pedidos.filter(p => p.estado !== 'entregado');
+  } else {
+    lista = pedidos.filter(p => p.estado === filtroPedido);
+  }
+  const entregados = pedidos.filter(p => p.estado === 'entregado').length;
+  const activos    = pedidos.filter(p => p.estado !== 'entregado').length;
+  document.getElementById('pedidosSubtitle').textContent =
+    `${activos} pendiente${activos !== 1 ? 's' : ''} · ${entregados} entregado${entregados !== 1 ? 's' : ''}`;
   if (!lista.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Sin pedidos${filtroPedido !== 'todos' ? ' en esta categoría' : ''}</div><div class="empty-sub">Los pedidos aparecerán aquí cuando los clientes ordenen</div></div>`;
+    const mensajes = {
+      activos:    '¡Todo al día! No hay pedidos pendientes.',
+      nuevo:      'Sin pedidos nuevos.',
+      preparando: 'Sin pedidos en preparación.',
+      listo:      'Sin pedidos listos para entregar.',
+      entregado:  'Sin pedidos entregados.',
+      todos:      'Sin pedidos aún.',
+    };
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">${mensajes[filtroPedido] || 'Sin pedidos'}</div><div class="empty-sub">Los pedidos aparecerán aquí cuando los clientes ordenen</div></div>`;
     return;
   }
 
@@ -683,7 +708,7 @@ async function cambiarEstado(id, nuevoEstado) {
   if (idx !== -1) pedidos[idx].estado = nuevoEstado;
   actualizarBadgePedidos();
   renderPedidos();
-  const labels = { preparando: 'En preparación', listo: '¡Listo para entregar!', entregado: 'Entregado ✓' };
+  const labels = { preparando: 'En preparación 🟡', listo: '¡Listo para entregar! 🟢', entregado: 'Entregado y ocultado de pendientes ✅' };
   toast('Pedido: ' + (labels[nuevoEstado] || nuevoEstado), 'success');
 }
 
