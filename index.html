@@ -114,6 +114,24 @@
   .card-cat { font-size:10px; font-weight:500; padding:3px 10px; border-radius:10px; letter-spacing:0.3px; background:var(--dorado-palido); color:var(--cafe-med); }
   .card-dot { width:8px; height:8px; border-radius:50%; background:var(--dorado); opacity:0.6; }
 
+  /* ── AGOTADO ── */
+  .card.agotado { opacity:0.72; }
+  .card.agotado .card-img::after {
+    content:'AGOTADO';
+    position:absolute; inset:0;
+    background:rgba(61,26,10,0.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; letter-spacing:2px;
+    color:white; backdrop-filter:blur(1px);
+  }
+  .badge-agotado {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#fdecea; color:var(--danger);
+    border:1px solid #f5c6cb;
+    font-size:10px; font-weight:600; padding:3px 10px;
+    border-radius:10px; letter-spacing:0.3px;
+  }
+
   /* ── BOTÓN AGREGAR ── */
   .btn-add {
     display:inline-flex; align-items:center; gap:5px;
@@ -566,13 +584,19 @@ function renderizar() {
     const grid = document.getElementById('grid-' + cat.id);
     items.forEach((p, i) => {
       const card = document.createElement('div');
-      card.className = 'card' + (p.popular ? ' popular' : '');
+      const agotado = p.stock !== null && p.stock !== undefined && p.stock <= 0;
+      card.className = 'card' + (p.popular ? ' popular' : '') + (agotado ? ' agotado' : '');
       card.style.animationDelay = (i * 0.06) + 's';
       const bg = p.bg_color || '#F5EFE6';
       const precio = parseFloat(p.precio) || 0;
       const imgInner = p.imagen_url
         ? `<img src="${p.imagen_url}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover;display:block;">`
         : (p.emoji || '🍽️');
+      const footerDerecho = agotado
+        ? `<span class="badge-agotado">✕ Agotado</span>`
+        : precio > 0
+          ? `<button class="btn-add" onclick="agregarAlCarrito('${p.id}')">+ Agregar</button>`
+          : '<div class="card-dot"></div>';
       card.innerHTML = `
         <div class="card-img" style="background:${bg}">${imgInner}<div class="card-ribbon">Popular</div></div>
         <div class="card-body">
@@ -583,7 +607,7 @@ function renderizar() {
           <div class="card-desc">${p.descripcion || ''}</div>
           <div class="card-footer">
             <span class="card-cat">${cat.emoji || ''} ${cat.nombre}</span>
-            ${precio > 0 ? `<button class="btn-add" onclick="agregarAlCarrito('${p.id}')">+ Agregar</button>` : '<div class="card-dot"></div>'}
+            ${footerDerecho}
           </div>
         </div>`;
       grid.appendChild(card);
@@ -599,6 +623,8 @@ function renderizar() {
 function agregarAlCarrito(prodId) {
   const prod = PRODUCTOS.find(p => p.id === prodId);
   if (!prod) return;
+  const agotado = prod.stock !== null && prod.stock !== undefined && prod.stock <= 0;
+  if (agotado) { toast('⚠️ Este producto está agotado', ''); return; }
   const existente = carrito.find(i => i.producto.id === prodId);
   if (existente) existente.cantidad++;
   else carrito.push({ producto: prod, cantidad: 1 });
