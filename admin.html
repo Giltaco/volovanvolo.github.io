@@ -775,7 +775,7 @@ function filterProducts() {
 
 // ── STOCK ─────────────────────────────────────────────
 async function actualizarStock(id, valor) {
-  const nuevoStock = valor === '' ? null : parseInt(valor);
+  const nuevoStock = valor === '' ? 0 : parseInt(valor);
   if (valor !== '' && isNaN(nuevoStock)) return;
   const { error } = await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', id);
   if (error) { toast('Error al actualizar stock', 'error'); return; }
@@ -853,10 +853,10 @@ async function saveProd() {
 }
 
 async function deleteProd(id, nombre) {
-  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
-  const { error } = await supabaseClient.from('productos').delete().eq('id', id);
+  if (!confirm(`¿Desactivar "${nombre}" y ocultarlo del catálogo?`)) return;
+  const { error } = await supabaseClient.from('productos').update({ activo: false }).eq('id', id);
   if (error) return toast('Error: ' + error.message, 'error');
-  toast('✓ Producto eliminado', 'success');
+  toast('✓ Producto desactivado', 'success');
   await loadProductos(); renderDashboard(); renderProductos();
 }
 
@@ -913,7 +913,8 @@ async function saveCat() {
 
 async function deleteCat(id, nombre) {
   const count = productos.filter(p => p.categoria_id === id).length;
-  const msg = count > 0 ? `"${nombre}" tiene ${count} producto(s). ¿Eliminar?` : `¿Eliminar la categoría "${nombre}"?`;
+  if (count > 0) return toast(`"${nombre}" tiene ${count} producto(s). Muévelos antes de eliminar la categoría.`, 'error');
+  const msg = `¿Eliminar la categoría "${nombre}"?`;
   if (!confirm(msg)) return;
   const { error } = await supabaseClient.from('categorias').delete().eq('id', id);
   if (error) return toast('Error: ' + error.message, 'error');
