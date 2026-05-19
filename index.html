@@ -1203,12 +1203,12 @@ const TIENDA = {
   <div class="hero-inner">
     <div class="hero-text">
       <div class="hero-kicker" id="heroBadge">Menú actualizado 2026</div>
-      <h1>Volovan <em>Volo</em></h1>
-      <p class="hero-lead">Volovanes, pan dulce, pasteles y bebidas listos para pedir. Revisa disponibilidad, arma tu pedido y envíalo por WhatsApp sin vueltas.</p>
+      <h1 id="heroTitulo">Volovan <em>Volo</em></h1>
+      <p class="hero-lead" id="heroTexto">Volovanes, pan dulce, pasteles y bebidas listos para pedir. Revisa disponibilidad, arma tu pedido y envíalo por WhatsApp sin vueltas.</p>
       <div class="hero-actions">
-        <button class="btn-hero primary" onclick="scrollToProductos()">Ver productos</button>
+        <button class="btn-hero primary" id="btnHeroProductos" onclick="scrollToProductos()">Ver productos</button>
         <button class="btn-hero secondary" onclick="abrirPedidoRapido()">Hacer pedido</button>
-        <button class="btn-hero ghost" onclick="cotizarEvento()">Cotizar evento</button>
+        <button class="btn-hero ghost" id="btnHeroCotizar" onclick="cotizarEvento()">Cotizar evento</button>
       </div>
       <div class="trust-row" aria-label="Indicadores de confianza">
         <div class="trust-item"><strong>Productos frescos</strong><span>Disponibilidad sincronizada</span></div>
@@ -1228,8 +1228,8 @@ const TIENDA = {
         </div>
         <div class="showcase-caption">
           <div>
-            <strong>Hecho para antojos</strong>
-            <span>Panadería, repostería y bebidas</span>
+          <strong id="heroFrase">Hecho para antojos</strong>
+          <span id="heroSubtitulo">Panadería, repostería y bebidas</span>
           </div>
           <div class="showcase-pill">Desde $</div>
         </div>
@@ -1349,7 +1349,7 @@ const TIENDA = {
       <span class="carrito-total-label">Total estimado<br>sin cargos extra</span>
       <span class="carrito-total-num" id="carritoTotal">$0.00</span>
     </div>
-    <button class="btn-checkout" onclick="abrirCheckout()">Finalizar pedido por WhatsApp</button>
+        <button class="btn-checkout" id="btnCheckoutTexto" onclick="abrirCheckout()">Finalizar pedido por WhatsApp</button>
     <button class="btn-vaciar" onclick="vaciarCarrito()">Vaciar carrito</button>
   </div>
 </div>
@@ -1430,6 +1430,10 @@ let mostrarAgotados = true;
 let ocultarSinStock = false;
 let catalogoActivo = true;
 let pedidosWebActivos = true;
+let mostrarFavoritos = true;
+let mostrarPrecios = true;
+let textoBotonProducto = 'Agregar al pedido';
+let textoBotonCotizar = 'Cotizar evento';
 
 function waLink(msg) {
   return `https://wa.me/${TIENDA.whatsapp}?text=${encodeURIComponent(msg)}`;
@@ -1455,7 +1459,13 @@ async function init() {
   }
   try {
     sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const [{ data: cats, error: e1 }, { data: prods, error: e2 }, { data: cfg, error: e3 }] = await Promise.all([
+    const [
+      { data: cats, error: e1 },
+      { data: prods, error: e2 },
+      { data: cfg, error: e3 },
+      { data: cfgCatalogo, error: e4 },
+      { data: cfgNegocio, error: e5 }
+    ] = await Promise.all([
       sb.from('categorias').select('*').order('orden'),
       sb.from('productos').select('*, categorias(id,nombre,emoji,slug)').eq('activo', true).order('orden'),
       sb.from('configuracion').select('clave,valor').in('clave', [
@@ -1467,10 +1477,14 @@ async function init() {
         'costo_envio',
         'whatsapp',
         'facebook_url'
-      ])
+      ]),
+      sb.from('configuracion_catalogo').select('*').eq('id', 1).maybeSingle(),
+      sb.from('configuracion_negocio').select('*').eq('id', 1).maybeSingle()
     ]);
     if (e1 || e2) throw e1 || e2;
     if (!e3) aplicarConfiguracion(cfg || []);
+    if (!e4 && cfgCatalogo) aplicarConfiguracionCatalogo(cfgCatalogo);
+    if (!e5 && cfgNegocio) aplicarConfiguracionNegocio(cfgNegocio);
     CATEGORIAS = cats  || [];
     PRODUCTOS  = (prods || []).filter(p => productoVisiblePorStock(p));
     actualizarOpcionDomicilio();
@@ -1508,6 +1522,47 @@ function aplicarConfiguracion(rows) {
   }
   if (cfg.get('whatsapp')) TIENDA.whatsapp = String(cfg.get('whatsapp')).replace(/\D/g, '');
   if (cfg.get('facebook_url')) TIENDA.facebook = String(cfg.get('facebook_url'));
+  initLinks();
+}
+
+function aplicarConfiguracionCatalogo(cfg) {
+  if (cfg.titulo) document.getElementById('heroTitulo').innerHTML = escapeHtml(cfg.titulo).replace(/\bVolo\b/i, '<em>Volo</em>');
+  if (cfg.subtitulo) document.getElementById('heroSubtitulo').textContent = cfg.subtitulo;
+  if (cfg.hero_texto) document.getElementById('heroTexto').textContent = cfg.hero_texto;
+  if (cfg.frase_comercial) document.getElementById('heroFrase').textContent = cfg.frase_comercial;
+  if (cfg.badge_texto) document.getElementById('heroBadge').textContent = cfg.badge_texto;
+  if (cfg.texto_boton_producto) textoBotonProducto = cfg.texto_boton_producto;
+  if (cfg.texto_boton_cotizar) {
+    textoBotonCotizar = cfg.texto_boton_cotizar;
+    document.getElementById('btnHeroCotizar').textContent = textoBotonCotizar;
+  }
+  if (cfg.mensaje_cotizacion) TIENDA.msgCotiza = cfg.mensaje_cotizacion;
+  if (typeof cfg.mostrar_favoritos === 'boolean') mostrarFavoritos = cfg.mostrar_favoritos;
+  if (typeof cfg.mostrar_agotados === 'boolean') mostrarAgotados = cfg.mostrar_agotados;
+  if (typeof cfg.mostrar_precios === 'boolean') mostrarPrecios = cfg.mostrar_precios;
+  if (cfg.logo_url) {
+    const tile = document.querySelector('.hero-product-tile');
+    if (tile) tile.innerHTML = `<img src="${escapeAttr(cfg.logo_url)}" alt="">`;
+  }
+  initLinks();
+}
+
+function aplicarConfiguracionNegocio(cfg) {
+  if (cfg.nombre_negocio) {
+    document.title = 'Catálogo — ' + cfg.nombre_negocio;
+    const footerBrand = document.querySelector('.footer-brand');
+    if (footerBrand) footerBrand.textContent = cfg.nombre_negocio;
+  }
+  if (cfg.whatsapp) TIENDA.whatsapp = String(cfg.whatsapp).replace(/\D/g, '');
+  if (cfg.facebook_url) TIENDA.facebook = cfg.facebook_url;
+  if (cfg.costo_envio !== null && cfg.costo_envio !== undefined && !Number.isNaN(parseFloat(cfg.costo_envio))) {
+    TIENDA.costoEnvio = parseFloat(cfg.costo_envio);
+  }
+  if (typeof cfg.domicilio_activo === 'boolean') domicilioActivo = cfg.domicilio_activo;
+  if (cfg.footer_texto) {
+    const footerLine = document.querySelector('.footer-line');
+    if (footerLine) footerLine.textContent = cfg.footer_texto;
+  }
   initLinks();
 }
 
@@ -1621,9 +1676,9 @@ function renderizar() {
 function renderDestacados(productosBase) {
   const section = document.getElementById('destacadosSection');
   const grid = document.getElementById('destacadosGrid');
-  const destacados = productosBase
+  const destacados = mostrarFavoritos ? productosBase
     .filter(p => p.popular && stockProducto(p) > 0)
-    .slice(0, 4);
+    .slice(0, 4) : [];
   if (!destacados.length) {
     section.classList.add('hidden');
     grid.innerHTML = '';
@@ -1658,7 +1713,7 @@ function crearProductoCard(p, cat, i, destacado = false) {
       </div>
       <div class="card-top">
         <div class="card-nombre">${escapeHtml(p.nombre)}</div>
-        <div class="card-precio">${precio > 0 ? '$' + precio.toFixed(2) : 'Consultar'}</div>
+        <div class="card-precio">${mostrarPrecios && precio > 0 ? '$' + precio.toFixed(2) : 'Precio a confirmar'}</div>
       </div>
       <div class="card-desc">${escapeHtml(descripcionCorta(p.descripcion || 'Producto disponible por pedido.', 90))}</div>
       <div class="card-footer">
@@ -1674,12 +1729,9 @@ function accionProducto(p, agotado, precio) {
     return `<button class="btn-add" disabled>Agotado</button>`;
   }
   if (!pedidosWebActivos) {
-    return `<button class="btn-add secondary" onclick="cotizarProducto('${escapeAttr(p.id)}')">Consultar</button>`;
+    return `<button class="btn-add" disabled>Pedidos pausados</button>`;
   }
-  if (precio <= 0) {
-    return `<button class="btn-add secondary" onclick="cotizarProducto('${escapeAttr(p.id)}')">Cotizar</button>`;
-  }
-  return `<button class="btn-add" onclick="agregarAlCarrito('${escapeAttr(p.id)}')">Agregar al pedido</button>`;
+  return `<button class="btn-add" onclick="agregarAlCarrito('${escapeAttr(p.id)}')">${escapeHtml(textoBotonProducto)}</button>`;
 }
 
 function estadoStock(p) {
@@ -1776,7 +1828,7 @@ function agregarAlCarrito(prodId) {
   if (!prod) return;
   const agotado = stockProducto(prod) <= 0;
   if (agotado) { toast('Este producto está agotado', ''); return; }
-  if (!pedidosWebActivos) { cotizarProducto(prodId); return; }
+  if (!pedidosWebActivos) { toast('Los pedidos web no están activos por el momento', ''); return; }
   const existente = carrito.find(i => String(i.producto.id) === String(prodId));
   if (existente) {
     if (stockProducto(prod) !== 999999 && existente.cantidad >= stockProducto(prod)) {
